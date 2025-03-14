@@ -1,5 +1,6 @@
 package com.github.kingschan1204.scheduler.core;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
@@ -13,7 +14,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class Task implements Delayed, Runnable, Serializable {
 
     protected final long interval;     // 任务执行间隔（毫秒）
+    @Getter
     protected long nextRunTime;        // 下一次执行时间（动态更新）
+    @Getter
     protected int retryCount = 0;      // 失败重试次数（用于指数退避）
 
     public Task(long interval) {
@@ -21,7 +24,7 @@ public abstract class Task implements Delayed, Runnable, Serializable {
         this.nextRunTime = System.currentTimeMillis() + interval;
     }
 
-    abstract protected void execute() throws Exception;
+    public abstract void execute() throws Exception;
 
     @Override
     public void run() {

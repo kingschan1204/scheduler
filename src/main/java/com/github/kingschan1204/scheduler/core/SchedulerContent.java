@@ -1,6 +1,7 @@
 package com.github.kingschan1204.scheduler.core;
 
 import com.github.kingschan1204.scheduler.core.impl.MemoryTaskScheduler;
+import com.github.kingschan1204.scheduler.core.impl.RedissonTaskScheduler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -9,7 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SchedulerContent {
     private final int core = Runtime.getRuntime().availableProcessors();
-    private TaskScheduler scheduler = new MemoryTaskScheduler(core, 2 * core);
+//    private TaskScheduler scheduler = new MemoryTaskScheduler(core, 2 * core);
+    private TaskScheduler scheduler = new RedissonTaskScheduler("localhost", 6379);
 
     private SchedulerContent() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
