@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
+import java.util.UUID;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
@@ -13,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public abstract class Task implements Delayed, Runnable, Serializable {
 
+    @Getter
+    private String id;
     protected final long interval;     // 任务执行间隔（毫秒）
     @Getter
     protected long nextRunTime;        // 下一次执行时间（动态更新）
@@ -22,6 +25,7 @@ public abstract class Task implements Delayed, Runnable, Serializable {
     public Task(long interval) {
         this.interval = interval;
         this.nextRunTime = System.currentTimeMillis() + interval;
+        this.id = UUID.randomUUID().toString();
     }
 
     public abstract void execute() throws Exception;

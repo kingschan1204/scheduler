@@ -1,5 +1,6 @@
 package com.github.kingschan1204.scheduler.core.impl;
 
+import com.github.kingschan1204.scheduler.core.RateLimiter;
 import com.github.kingschan1204.scheduler.core.Task;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
@@ -19,7 +20,7 @@ public class MemoryTaskScheduler implements TaskScheduler {
 
     // 每秒允许的最大请求次数
     private final int MAX_REQUESTS_PER_SECOND = 10;
-    private final Semaphore semaphore = new Semaphore(MAX_REQUESTS_PER_SECOND);
+    private final RateLimiter rateLimiter = new RateLimiter(MAX_REQUESTS_PER_SECOND);
 
     /**
      * 初始化调度管理器
@@ -49,16 +50,7 @@ public class MemoryTaskScheduler implements TaskScheduler {
                 // 从队列中取出一个到期的任务（阻塞直到有可用任务）
                 Task task = taskQueue.take();
                 workerPool.execute(() -> {
-                    try {
-                        // 获取信号量许可 （控制请求频率）
-                        semaphore.acquire();
-                        task.run();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    } finally {
-                        // 释放信号量许可
-                        semaphore.release();
-                    }
+                    rateLimiter.execute(task);
                 });
 //                workerPool.submit()
             } catch (InterruptedException e) {
@@ -87,5 +79,6 @@ public class MemoryTaskScheduler implements TaskScheduler {
         } catch (InterruptedException e) {
             workerPool.shutdownNow();
         }
+        rateLimiter.shutdown();
     }
 }
