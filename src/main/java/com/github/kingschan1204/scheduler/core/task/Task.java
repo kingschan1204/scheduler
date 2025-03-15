@@ -1,5 +1,6 @@
-package com.github.kingschan1204.scheduler.core;
+package com.github.kingschan1204.scheduler.core.task;
 
+import com.github.kingschan1204.scheduler.core.SchedulerContent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,28 +1,12 @@
-import com.github.kingschan1204.scheduler.core.SchedulerContent;
-import com.github.kingschan1204.scheduler.core.Task;
-import lombok.extern.slf4j.Slf4j;
+package com.github.kingschan1204.scheduler.test;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import com.github.kingschan1204.scheduler.core.SchedulerContent;
+import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
-class TestTask extends Task {
-    public TestTask(long interval) {
-        super(interval);
-    }
 
-    @Override
-    public void execute() throws Exception {
-        String datetime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        log.info("{}", datetime);
-//        throw new RuntimeException("error test");
-    }
-
-
-}
 
 /**
  * @author kingschan
@@ -30,9 +14,19 @@ class TestTask extends Task {
 @Slf4j
 public class CodeTest {
 
+    static void set() {
+//        System.setProperty("scheduler.engine", "com.github.kingschan1204.scheduler.core.impl.MemoryTaskScheduler");
+        System.setProperty("scheduler.engine", "com.github.kingschan1204.scheduler.core.impl.RedissonTaskScheduler");
+        System.setProperty("scheduler.poolName", "redisTask");
+        System.setProperty("scheduler.rateLimiter", "2");
+        System.setProperty("scheduler.redisPort", "localhost");
+        System.setProperty("scheduler.port", "6379");
+        System.setProperty("scheduler.redisPassword", "");
+        System.setProperty("scheduler.queueName", "task-queue");
+    }
 
     public static void main(String[] args) {
-
+        set();
         log.info("start...");
         SchedulerContent scheduler = SchedulerContent.getInstance();
         scheduler.addTask(new TestTask(1000));

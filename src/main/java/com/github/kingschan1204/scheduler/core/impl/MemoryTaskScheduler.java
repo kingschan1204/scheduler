@@ -1,7 +1,8 @@
 package com.github.kingschan1204.scheduler.core.impl;
 
 import com.github.kingschan1204.scheduler.core.RateLimiter;
-import com.github.kingschan1204.scheduler.core.Task;
+import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
+import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
 
@@ -19,23 +20,20 @@ public class MemoryTaskScheduler implements TaskScheduler {
     private final DelayQueue<Task> taskQueue = new DelayQueue<>();
 
     // 每秒允许的最大请求次数
-    private final int MAX_REQUESTS_PER_SECOND = 10;
+    private final int MAX_REQUESTS_PER_SECOND = SchedulerConfig.getInstance().getRateLimiter();
     private final RateLimiter rateLimiter = new RateLimiter(MAX_REQUESTS_PER_SECOND);
 
-    /**
-     * 初始化调度管理器
-     *
-     * @param corePoolSize 核心线程数（保持活跃的最小线程数）
-     * @param maxPoolSize  最大线程数（突发流量时允许扩展到的上限）
-     */
-    public MemoryTaskScheduler(int corePoolSize, int maxPoolSize) {
+
+    public MemoryTaskScheduler() {
+        int core = Runtime.getRuntime().availableProcessors();
         // 配置线程池参数
         workerPool = new ThreadPoolExecutor(
-                corePoolSize,
-                maxPoolSize,
+                core,
+                core * 2,
                 60L, TimeUnit.SECONDS,  // 非核心线程空闲60秒后回收
                 new LinkedBlockingQueue<>(1000),  // 任务缓冲队列（防止OOM）
-                new ThreadFactoryBuilder("my pool")  // 线程命名（便于监控）
+                // 线程命名（便于监控）
+                new ThreadFactoryBuilder(SchedulerConfig.getInstance().getPoolName())
         );
         initScheduler();
     }

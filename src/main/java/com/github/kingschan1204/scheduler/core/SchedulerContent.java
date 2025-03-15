@@ -1,7 +1,7 @@
 package com.github.kingschan1204.scheduler.core;
 
-import com.github.kingschan1204.scheduler.core.impl.MemoryTaskScheduler;
-import com.github.kingschan1204.scheduler.core.impl.RedissonTaskScheduler;
+import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
+import com.github.kingschan1204.scheduler.core.task.Task;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -9,11 +9,18 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class SchedulerContent {
-    private final int core = Runtime.getRuntime().availableProcessors();
-//    private TaskScheduler scheduler = new MemoryTaskScheduler(core, 2 * core);
-    private TaskScheduler scheduler = new RedissonTaskScheduler("localhost", 6379);
+    private TaskScheduler scheduler;
 
     private SchedulerContent() {
+        try {
+            Class<?> clazz = Class.forName(SchedulerConfig.getInstance().getEngine());
+
+            // 创建对象
+            Object obj = clazz.getDeclaredConstructor().newInstance();
+            scheduler = (TaskScheduler) obj;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.warn("Scheduler is shutting down...");
             scheduler.shutdown();
@@ -23,6 +30,7 @@ public class SchedulerContent {
 
     private static class Holder {
         private static SchedulerContent instance = new SchedulerContent();
+
     }
 
     public static SchedulerContent getInstance() {
