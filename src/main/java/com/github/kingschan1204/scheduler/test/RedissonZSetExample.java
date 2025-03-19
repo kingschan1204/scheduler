@@ -1,4 +1,4 @@
-package com.github.kingschan1204.scheduler.core;
+package com.github.kingschan1204.scheduler.test;
 
 import org.redisson.Redisson;
 import org.redisson.api.RScoredSortedSet;

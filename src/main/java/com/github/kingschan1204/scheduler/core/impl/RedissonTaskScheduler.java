@@ -2,9 +2,11 @@ package com.github.kingschan1204.scheduler.core.impl;
 
 import com.github.kingschan1204.scheduler.core.RateLimiter;
 import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
+import com.github.kingschan1204.scheduler.core.cron.CronExpression;
 import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
+import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RBlockingQueue;
@@ -12,6 +14,7 @@ import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
+import java.util.Date;
 import java.util.concurrent.*;
 
 /**
@@ -27,8 +30,8 @@ public class RedissonTaskScheduler implements TaskScheduler {
     // Redisson 客户端实例
     private final RedissonClient redissonClient;
     // 延迟队列和目标队列
-    private final RDelayedQueue<String> delayedQueue;
-    private final RBlockingQueue<String> targetQueue;
+    private final RDelayedQueue<TaskDataMap> delayedQueue;
+    private final RBlockingQueue<TaskDataMap> targetQueue;
     // 工作线程池
     private final ThreadPoolExecutor workerPool;
     // 频率控制信号量
@@ -66,11 +69,13 @@ public class RedissonTaskScheduler implements TaskScheduler {
     }
 
     @Override
-    public void addTask(Task task) {
+    public void addTask(TaskDataMap taskDataMap)throws Exception {
+        CronExpression cronExpression = new CronExpression(taskDataMap.getCron());
+        Date date= cronExpression.getNextValidTimeAfter(new Date());
         // 计算延迟时间
-        long delay = task.getNextRunTime() - System.currentTimeMillis();
+        long delay = date.getTime() - System.currentTimeMillis();
         // 添加到延迟队列（时间单位转换为秒）
-        delayedQueue.offer(task.getId(), Math.max(0, delay), TimeUnit.MILLISECONDS);
+        delayedQueue.offer(taskDataMap, Math.max(0, delay), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -103,15 +108,16 @@ public class RedissonTaskScheduler implements TaskScheduler {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     // 阻塞获取队列任务
-                    String taskId = targetQueue.take();
+                    TaskDataMap taskDataMap = targetQueue.take();
 
                     workerPool.execute(() -> {
                         rateLimiter.execute(()->{
-                            log.info("{}",taskId);
+                            log.info("{}",taskDataMap);
 
                         });
                     });
                 } catch (InterruptedException e) {
+                    e.printStackTrace();
                     Thread.currentThread().interrupt();
                     break;
                 }

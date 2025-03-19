@@ -13,7 +13,12 @@ public class CronTest {
         Date date = new Date();
         for (int i = 0; i < 10; i++) {
             date = cron.getNextValidTimeAfter(date);
-            System.out.println(sdf.format(date));
+            if (null != date) {
+                System.out.println(sdf.format(date));
+            } else {
+                System.out.println("不会执行了！");
+                break;
+            }
         }
     }
 }

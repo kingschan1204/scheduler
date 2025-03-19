@@ -2,6 +2,7 @@ package com.github.kingschan1204.scheduler.core;
 
 import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
 import com.github.kingschan1204.scheduler.core.task.Task;
+import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,8 +38,12 @@ public class SchedulerContent {
         return Holder.instance;
     }
 
-    public void addTask(Task task) {
-        scheduler.addTask(task);
+    public void addTask(TaskDataMap taskdata) {
+        try{
+            scheduler.addTask(taskdata);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void shutdown() {

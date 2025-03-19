@@ -1,15 +1,19 @@
 package com.github.kingschan1204.scheduler.test;
 
 import com.github.kingschan1204.scheduler.core.task.Task;
+import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
+public
 class TestTask extends Task {
-    public TestTask(long interval) {
-        super(interval);
+
+
+    public TestTask(TaskDataMap taskDataMap) {
+        super(taskDataMap);
     }
 
     @Override

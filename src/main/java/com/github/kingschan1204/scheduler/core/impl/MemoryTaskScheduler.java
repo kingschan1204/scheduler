@@ -5,6 +5,8 @@ import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
 import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
+import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
+import com.github.kingschan1204.scheduler.test.TestTask;
 
 import java.util.concurrent.*;
 
@@ -60,7 +62,8 @@ public class MemoryTaskScheduler implements TaskScheduler {
     }
 
     @Override
-    public void addTask(Task task) {
+    public void addTask(TaskDataMap taskDataMap)throws Exception {
+        Task task =new TestTask(taskDataMap);
         taskQueue.put(task);
     }
 
