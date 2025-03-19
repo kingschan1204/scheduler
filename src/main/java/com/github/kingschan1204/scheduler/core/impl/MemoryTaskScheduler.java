@@ -1,12 +1,12 @@
 package com.github.kingschan1204.scheduler.core.impl;
 
 import com.github.kingschan1204.scheduler.core.RateLimiter;
-import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
-import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
+import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
+import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
-import com.github.kingschan1204.scheduler.test.TestTask;
+import com.github.kingschan1204.scheduler.core.task.TaskHelper;
 
 import java.util.concurrent.*;
 
@@ -49,9 +49,7 @@ public class MemoryTaskScheduler implements TaskScheduler {
             try {
                 // 从队列中取出一个到期的任务（阻塞直到有可用任务）
                 Task task = taskQueue.take();
-                workerPool.execute(() -> {
-                    rateLimiter.execute(task);
-                });
+                workerPool.execute(() -> rateLimiter.execute(task));
 //                workerPool.submit()
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -63,7 +61,7 @@ public class MemoryTaskScheduler implements TaskScheduler {
 
     @Override
     public void addTask(TaskDataMap taskDataMap)throws Exception {
-        Task task =new TestTask(taskDataMap);
+        Task task = TaskHelper.of(taskDataMap);
         taskQueue.put(task);
     }
 

@@ -6,7 +6,6 @@ import lombok.ToString;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author kingschan
@@ -29,18 +28,18 @@ public class TaskDataMap implements Serializable {
     // 任务参数
     @Getter
     @Setter
-    private Map<String, Objects> data;
+    private Map<String, Object> data;
 
     public TaskDataMap(String taskClass, String cron) {
         this.taskClass = taskClass;
         this.cron = cron;
     }
-    public TaskDataMap(String taskClass, String cron, Map<String, Objects> data) {
+    public TaskDataMap(String taskClass, String cron, Map<String, Object> data) {
         this.taskClass = taskClass;
         this.cron = cron;
         this.data = data;
     }
-    public TaskDataMap(String taskClass, String cron, Map<String, Objects> data, Integer retryCount) {
+    public TaskDataMap(String taskClass, String cron, Map<String, Object> data, Integer retryCount) {
         this.taskClass = taskClass;
         this.cron = cron;
         this.data = data;

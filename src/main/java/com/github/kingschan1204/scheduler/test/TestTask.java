@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 public
@@ -18,10 +20,24 @@ class TestTask extends Task {
 
     @Override
     public void execute() throws Exception {
-        String datetime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        log.info("{}", datetime);
-//        throw new RuntimeException("error test");
+//        String datetime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        if (null == taskDataMap.getData()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("count", 0);
+            taskDataMap.setData(map);
+        } else {
+            Map<String, Object> map = taskDataMap.getData();
+            int count = (int) map.get("count");
+            count++;
+            map.put("count", count);
+            taskDataMap.setData(map);
+            if (count == 3) {
+                jobdone = true;
+            }
+        }
+        log.info("{}", taskDataMap);
     }
+//        throw new RuntimeException("error test");
 
 
 }

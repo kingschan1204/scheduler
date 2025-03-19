@@ -7,6 +7,7 @@ import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
+import com.github.kingschan1204.scheduler.core.task.TaskHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RBlockingQueue;
@@ -90,11 +91,13 @@ public class RedissonTaskScheduler implements TaskScheduler {
             if (!workerPool.awaitTermination(60, TimeUnit.SECONDS)) {
                 workerPool.shutdownNow();
             }
+            if(!redissonClient.isShutdown()){
+                // 关闭Redisson客户端
+                redissonClient.shutdown();
+            }
         } catch (InterruptedException e) {
             workerPool.shutdownNow();
         }
-        // 关闭Redisson客户端
-        redissonClient.shutdown();
         //关闭限流器
         rateLimiter.shutdown();
 
@@ -109,13 +112,8 @@ public class RedissonTaskScheduler implements TaskScheduler {
                 try {
                     // 阻塞获取队列任务
                     TaskDataMap taskDataMap = targetQueue.take();
-
-                    workerPool.execute(() -> {
-                        rateLimiter.execute(()->{
-                            log.info("{}",taskDataMap);
-
-                        });
-                    });
+                    Task task = TaskHelper.of(taskDataMap);
+                    workerPool.execute(() -> rateLimiter.execute(task));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                     Thread.currentThread().interrupt();

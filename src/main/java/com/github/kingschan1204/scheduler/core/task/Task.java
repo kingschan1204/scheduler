@@ -20,6 +20,8 @@ public abstract class Task implements Delayed, Runnable, Serializable {
     protected long nextRunTime;        // 下一次执行时间（动态更新）
     @Getter
     protected final TaskDataMap taskDataMap;
+    //任务是否完成执行，默认false未完成，true完成
+    protected boolean jobdone = false;
 
     public Task(TaskDataMap taskDataMap) {
         this.taskDataMap = taskDataMap;
@@ -33,6 +35,10 @@ public abstract class Task implements Delayed, Runnable, Serializable {
     public void run() {
         try {
             execute();
+            if(jobdone){
+                log.info("任务完成");
+                return;
+            }
             //如果是周期任务，则加入队列中
             if(null != CronHelper.getNextValidTime(taskDataMap.getCron())){
                 SchedulerContent.getInstance().addTask(taskDataMap);
