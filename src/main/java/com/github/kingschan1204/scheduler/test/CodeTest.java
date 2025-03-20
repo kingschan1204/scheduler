@@ -4,8 +4,6 @@ import com.github.kingschan1204.scheduler.core.SchedulerContent;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-
 
 /**
  * @author kingschan
@@ -14,8 +12,8 @@ import java.util.Map;
 public class CodeTest {
 
     static void set() {
-        System.setProperty("scheduler.engine", "com.github.kingschan1204.scheduler.core.impl.MemoryTaskScheduler");
-//        System.setProperty("scheduler.engine", "com.github.kingschan1204.scheduler.core.impl.RedissonTaskScheduler");
+//        System.setProperty("scheduler.engine", "com.github.kingschan1204.scheduler.core.impl.MemoryTaskScheduler");
+        System.setProperty("scheduler.engine", "com.github.kingschan1204.scheduler.core.impl.RedissonTaskScheduler");
         System.setProperty("scheduler.poolName", "redisTask");
         System.setProperty("scheduler.rateLimiter", "10");
         System.setProperty("scheduler.redisPort", "localhost");

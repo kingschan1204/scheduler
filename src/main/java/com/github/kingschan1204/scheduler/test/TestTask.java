@@ -4,8 +4,6 @@ import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +18,6 @@ class TestTask extends Task {
 
     @Override
     public void execute() throws Exception {
-//        String datetime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         if (null == taskDataMap.getData()) {
             Map<String, Object> map = new HashMap<>();
             map.put("count", 0);
@@ -31,9 +28,9 @@ class TestTask extends Task {
             count++;
             map.put("count", count);
             taskDataMap.setData(map);
-            if (count == 3) {
-                jobdone = true;
-            }
+//            if (count == 3) {
+//                jobdone = true;
+//            }
         }
         log.info("{}", taskDataMap);
     }

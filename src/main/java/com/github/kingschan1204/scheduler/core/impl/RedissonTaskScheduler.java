@@ -1,11 +1,13 @@
 package com.github.kingschan1204.scheduler.core.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.kingschan1204.scheduler.core.RateLimiter;
+import com.github.kingschan1204.scheduler.core.TaskScheduler;
+import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
 import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
 import com.github.kingschan1204.scheduler.core.cron.CronExpression;
 import com.github.kingschan1204.scheduler.core.task.Task;
-import com.github.kingschan1204.scheduler.core.TaskScheduler;
-import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import com.github.kingschan1204.scheduler.core.task.TaskHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.redisson.Redisson;
 import org.redisson.api.RBlockingQueue;
 import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RedissonClient;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 
 import java.util.Date;
@@ -20,6 +23,7 @@ import java.util.concurrent.*;
 
 /**
  * 使用 Redisson 延迟队列实现的任务调度器
+ *
  * @author kingschan
  */
 @Slf4j
@@ -42,13 +46,20 @@ public class RedissonTaskScheduler implements TaskScheduler {
     private final ExecutorService queueListener = Executors.newSingleThreadExecutor();
 
     public RedissonTaskScheduler() {
+        ObjectMapper mapper = new ObjectMapper();
+        // 禁用所有类型信息（关键！）
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.disable(SerializationFeature.WRITE_ENUMS_USING_INDEX);
+        // 禁用类型推断
+        mapper.deactivateDefaultTyping();
         // Redisson 配置
         Config config = new Config();
         config.useSingleServer()
                 .setAddress("redis://" + SchedulerConfig.getInstance().getRedisHost() + ":" + SchedulerConfig.getInstance().getRedisPort())
                 .setConnectionPoolSize(20)
                 .setConnectionMinimumIdleSize(10);
-
+        // 设置序列化方式为 JSON
+        config.setCodec(new JsonJacksonCodec());
         this.redissonClient = Redisson.create(config);
 
         // 初始化队列
@@ -70,9 +81,9 @@ public class RedissonTaskScheduler implements TaskScheduler {
     }
 
     @Override
-    public void addTask(TaskDataMap taskDataMap)throws Exception {
+    public void addTask(TaskDataMap taskDataMap) throws Exception {
         CronExpression cronExpression = new CronExpression(taskDataMap.getCron());
-        Date date= cronExpression.getNextValidTimeAfter(new Date());
+        Date date = cronExpression.getNextValidTimeAfter(new Date());
         // 计算延迟时间
         long delay = date.getTime() - System.currentTimeMillis();
         // 添加到延迟队列（时间单位转换为秒）
@@ -91,7 +102,7 @@ public class RedissonTaskScheduler implements TaskScheduler {
             if (!workerPool.awaitTermination(60, TimeUnit.SECONDS)) {
                 workerPool.shutdownNow();
             }
-            if(!redissonClient.isShutdown()){
+            if (!redissonClient.isShutdown()) {
                 // 关闭Redisson客户端
                 redissonClient.shutdown();
             }
