@@ -52,14 +52,15 @@ public class RedissonTaskScheduler implements TaskScheduler {
         mapper.disable(SerializationFeature.WRITE_ENUMS_USING_INDEX);
         // 禁用类型推断
         mapper.deactivateDefaultTyping();
+        JsonJacksonCodec codec = new JsonJacksonCodec(mapper);
         // Redisson 配置
         Config config = new Config();
+        // 设置序列化方式为 JSON
+        config.setCodec(codec);
         config.useSingleServer()
                 .setAddress("redis://" + SchedulerConfig.getInstance().getRedisHost() + ":" + SchedulerConfig.getInstance().getRedisPort())
                 .setConnectionPoolSize(20)
                 .setConnectionMinimumIdleSize(10);
-        // 设置序列化方式为 JSON
-        config.setCodec(new JsonJacksonCodec());
         this.redissonClient = Redisson.create(config);
 
         // 初始化队列
@@ -102,11 +103,12 @@ public class RedissonTaskScheduler implements TaskScheduler {
             if (!workerPool.awaitTermination(60, TimeUnit.SECONDS)) {
                 workerPool.shutdownNow();
             }
-            if (!redissonClient.isShutdown()) {
+            // 检查Redisson客户端是否已经关闭
+           /* if (redissonClient != null && !redissonClient.isShutdown()) {
                 // 关闭Redisson客户端
                 redissonClient.shutdown();
-            }
-        } catch (InterruptedException e) {
+            }*/
+        } catch (Exception e) {
             workerPool.shutdownNow();
         }
         //关闭限流器
