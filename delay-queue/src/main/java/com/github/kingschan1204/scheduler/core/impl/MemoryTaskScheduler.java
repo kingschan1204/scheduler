@@ -14,6 +14,7 @@ import java.util.concurrent.*;
  * @author kingschan
  */
 public class MemoryTaskScheduler implements TaskScheduler {
+    final SchedulerConfig schedulerConfig;
     // 定时任务调度器，用于周期性检查任务队列
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     // 工作线程池，执行实际的爬取任务
@@ -22,11 +23,14 @@ public class MemoryTaskScheduler implements TaskScheduler {
     private final DelayQueue<Task> taskQueue = new DelayQueue<>();
 
     // 每秒允许的最大请求次数
-    private final int MAX_REQUESTS_PER_SECOND = SchedulerConfig.getInstance().getRateLimiter();
-    private final RateLimiter rateLimiter = new RateLimiter(MAX_REQUESTS_PER_SECOND);
+    private final int MAX_REQUESTS_PER_SECOND ;//= SingletonSchedulerConfig.getInstance().getRateLimiter();
+    private final RateLimiter rateLimiter;// = new RateLimiter(MAX_REQUESTS_PER_SECOND);
 
 
-    public MemoryTaskScheduler() {
+    public MemoryTaskScheduler(SchedulerConfig schedulerConfig) {
+        this.schedulerConfig = schedulerConfig;
+        MAX_REQUESTS_PER_SECOND = schedulerConfig.rateLimiter();
+        rateLimiter = new RateLimiter(MAX_REQUESTS_PER_SECOND);
         int core = Runtime.getRuntime().availableProcessors();
         // 配置线程池参数
         workerPool = new ThreadPoolExecutor(
@@ -35,7 +39,7 @@ public class MemoryTaskScheduler implements TaskScheduler {
                 60L, TimeUnit.SECONDS,  // 非核心线程空闲60秒后回收
                 new LinkedBlockingQueue<>(1000),  // 任务缓冲队列（防止OOM）
                 // 线程命名（便于监控）
-                new ThreadFactoryBuilder(SchedulerConfig.getInstance().getPoolName())
+                new ThreadFactoryBuilder(this.schedulerConfig.poolName())
         );
         initScheduler();
     }
@@ -61,7 +65,7 @@ public class MemoryTaskScheduler implements TaskScheduler {
 
     @Override
     public void addTask(TaskDataMap taskDataMap)throws Exception {
-        Task task = TaskHelper.of(taskDataMap);
+        Task task = TaskHelper.of(taskDataMap,this);
         taskQueue.put(task);
     }
 

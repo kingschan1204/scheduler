@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.kingschan1204.scheduler.core.RateLimiter;
 import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.ThreadFactoryBuilder;
+//import com.github.kingschan1204.scheduler.core.config.impl.SingletonSchedulerConfig;
 import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
 import com.github.kingschan1204.scheduler.core.cron.CronExpression;
 import com.github.kingschan1204.scheduler.core.task.Task;
@@ -28,9 +29,9 @@ import java.util.concurrent.*;
  */
 @Slf4j
 public class RedissonTaskScheduler implements TaskScheduler {
-
+    final SchedulerConfig schedulerConfig;
     // 目标队列和延迟队列的键名
-    private static final String TARGET_QUEUE_KEY = SchedulerConfig.getInstance().getQueueName();
+    private  final String TARGET_QUEUE_KEY ;//= SingletonSchedulerConfig.getInstance().getQueueName();
 
     // Redisson 客户端实例
     private final RedissonClient redissonClient;
@@ -40,12 +41,17 @@ public class RedissonTaskScheduler implements TaskScheduler {
     // 工作线程池
     private final ThreadPoolExecutor workerPool;
     // 频率控制信号量
-    private final int MAX_REQUESTS_PER_SECOND = SchedulerConfig.getInstance().getRateLimiter();
-    private final RateLimiter rateLimiter = new RateLimiter(MAX_REQUESTS_PER_SECOND);
+    private final int MAX_REQUESTS_PER_SECOND ;//= SingletonSchedulerConfig.getInstance().getRateLimiter();
+    private final RateLimiter rateLimiter ;//= new RateLimiter(MAX_REQUESTS_PER_SECOND);
     // 队列监听线程池
     private final ExecutorService queueListener = Executors.newSingleThreadExecutor();
 
-    public RedissonTaskScheduler() {
+    public RedissonTaskScheduler(SchedulerConfig schedulerConfig) {
+        this.schedulerConfig = schedulerConfig;
+        TARGET_QUEUE_KEY = schedulerConfig.queueName();
+        MAX_REQUESTS_PER_SECOND = schedulerConfig.rateLimiter();
+        rateLimiter = new RateLimiter(MAX_REQUESTS_PER_SECOND);
+
         ObjectMapper mapper = new ObjectMapper();
         // 禁用所有类型信息（关键！）
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -58,7 +64,7 @@ public class RedissonTaskScheduler implements TaskScheduler {
         // 设置序列化方式为 JSON
         config.setCodec(codec);
         config.useSingleServer()
-                .setAddress("redis://" + SchedulerConfig.getInstance().getRedisHost() + ":" + SchedulerConfig.getInstance().getRedisPort())
+                .setAddress("redis://" + this.schedulerConfig.redisHost() + ":" + this.schedulerConfig.redisPort())
                 .setConnectionPoolSize(20)
                 .setConnectionMinimumIdleSize(10);
         this.redissonClient = Redisson.create(config);
@@ -74,7 +80,7 @@ public class RedissonTaskScheduler implements TaskScheduler {
                 2 * core,
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(1000),
-                new ThreadFactoryBuilder(SchedulerConfig.getInstance().getPoolName())
+                new ThreadFactoryBuilder(this.schedulerConfig.poolName())
         );
 
         // 启动队列监听
@@ -125,7 +131,7 @@ public class RedissonTaskScheduler implements TaskScheduler {
                 try {
                     // 阻塞获取队列任务
                     TaskDataMap taskDataMap = targetQueue.take();
-                    Task task = TaskHelper.of(taskDataMap);
+                    Task task = TaskHelper.of(taskDataMap,this);
                     workerPool.execute(() -> rateLimiter.execute(task));
                 } catch (InterruptedException e) {
                     e.printStackTrace();

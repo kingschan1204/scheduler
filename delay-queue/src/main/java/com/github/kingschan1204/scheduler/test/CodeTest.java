@@ -1,6 +1,9 @@
 package com.github.kingschan1204.scheduler.test;
 
-import com.github.kingschan1204.scheduler.core.SchedulerContent;
+import com.github.kingschan1204.scheduler.core.config.SchedulerConfig;
+import com.github.kingschan1204.scheduler.core.config.impl.SysEnvSchedulerConfig;
+import com.github.kingschan1204.scheduler.core.context.SchedulerContext;
+import com.github.kingschan1204.scheduler.core.context.impl.DefaultSchedulerContext;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +28,8 @@ public class CodeTest {
     public static void main(String[] args) {
         set();
         log.info("start...");
-        SchedulerContent scheduler = SchedulerContent.getInstance();
-        scheduler.addTask(new TaskDataMap("com.github.kingschan1204.scheduler.test.TestTask", "0/3 * * * * ?", null));
+        SchedulerConfig schedulerConfig = new SysEnvSchedulerConfig();
+        SchedulerContext context = new DefaultSchedulerContext(schedulerConfig);
+        context.addTask(new TaskDataMap("com.github.kingschan1204.scheduler.test.TestTask", "0/3 * * * * ?", null));
     }
 }

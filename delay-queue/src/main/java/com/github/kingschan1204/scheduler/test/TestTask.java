@@ -1,19 +1,17 @@
 package com.github.kingschan1204.scheduler.test;
 
+import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.task.Task;
 import com.github.kingschan1204.scheduler.core.task.TaskDataMap;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 public
 class TestTask extends Task {
 
 
-    public TestTask(TaskDataMap taskDataMap) {
-        super(taskDataMap);
+    public TestTask(TaskDataMap taskDataMap, TaskScheduler taskScheduler) {
+        super(taskDataMap, taskScheduler);
     }
 
     @Override

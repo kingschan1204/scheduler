@@ -1,6 +1,6 @@
 package com.github.kingschan1204.scheduler.core.task;
 
-import com.github.kingschan1204.scheduler.core.SchedulerContent;
+import com.github.kingschan1204.scheduler.core.TaskScheduler;
 import com.github.kingschan1204.scheduler.core.cron.CronHelper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +20,13 @@ public abstract class Task implements Delayed, Runnable, Serializable {
     protected long nextRunTime;        // 下一次执行时间（动态更新）
     @Getter
     protected final TaskDataMap taskDataMap;
+    final TaskScheduler taskScheduler;
     //任务是否完成执行，默认false未完成，true完成
-    protected boolean jobdone = false;
+    protected boolean jobDone = false;
 
-    public Task(TaskDataMap taskDataMap) {
+    public Task(TaskDataMap taskDataMap, TaskScheduler taskScheduler) {
         this.taskDataMap = taskDataMap;
+        this.taskScheduler = taskScheduler;
         Date date = CronHelper.getNextValidTime(taskDataMap.getCron());
         this.nextRunTime = date.getTime();
     }
@@ -35,13 +37,13 @@ public abstract class Task implements Delayed, Runnable, Serializable {
     public void run() {
         try {
             execute();
-            if(jobdone){
+            if(jobDone){
                 log.info("任务完成");
                 return;
             }
             //如果是周期任务，则加入队列中
             if(null != CronHelper.getNextValidTime(taskDataMap.getCron())){
-                SchedulerContent.getInstance().addTask(taskDataMap);
+                this.taskScheduler.addTask(taskDataMap);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,10 +70,12 @@ public abstract class Task implements Delayed, Runnable, Serializable {
         // 重新加入队列（需处理可能的队列满异常）
         try {
             log.warn("任务执行失败，将在{}秒后重试", backoffTime / 1000);
-            SchedulerContent.getInstance().addTask(taskDataMap);
+            this.taskScheduler.addTask(taskDataMap);
         } catch (IllegalStateException ex) {
             ex.printStackTrace();
             System.out.println("任务队列已满，丢弃任务");
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
